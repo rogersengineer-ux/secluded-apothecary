@@ -1,7 +1,7 @@
-🌲 Secluded Cabin
+Secluded Apothecary
 A single-file HTML meditation app combining guided breathing with mental sanctuary ritual.
 
-Live demo → https://your-username.github.io/secluded-cabin
+Live demo → https://rogersengineer-ux.github.io/secluded-apothecary/
 
 What It Does
 Secluded Cabin guides you through a three-phase immersive ritual:
