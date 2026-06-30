@@ -1225,8 +1225,12 @@ body { animation: appBoot 1.8s ease; }
   </div>
 </div>
 
-<script>
+<script type="module">
 'use strict';
+
+// Self-hosted anime.js v4.5.0 — no CDN, no build step, no change to the
+// project's offline/zero-dependency footprint beyond this one vendored file.
+import { animate } from './vendor/anime.esm.min.js';
 
 /* ─────────────────────────────────────────────────────────────────
    CONSTANTS
@@ -1944,31 +1948,31 @@ function driftIngredient(text, targetX, targetY) {
   el.style.opacity = '0';
   document.body.appendChild(el);
 
-  const dur = 90; // frames ~1.5s at 60fps
-  let frame = 0;
+  const finish = () => {
+    el.remove();
+    burstParticles(12, 'rgba(180,220,100,0.6)');
+    if (S.soundOn) playDriftChime();
+  };
 
-  function step() {
-    frame++;
-    const t = frame / dur;
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
-
-    const cx = startX + (targetX - startX) * ease;
-    const cy = startY + (targetY - startY) * Math.pow(t, 1.6);
-
-    el.style.left    = cx + 'px';
-    el.style.top     = cy + 'px';
-    el.style.opacity = t < 0.15 ? t/0.15 : t < 0.75 ? 1 : 1 - (t-0.75)/0.25;
-    el.style.transform = `scale(${1 - t * 0.3})`;
-
-    if (frame < dur) {
-      requestAnimationFrame(step);
-    } else {
-      el.remove();
-      burstParticles(12, 'rgba(180,220,100,0.6)');
-      if (S.soundOn) playDriftChime();
-    }
-  }
-  requestAnimationFrame(step);
+  // Duration-based tween (was a 90-frame rAF counter, i.e. only correct at
+  // exactly 60fps — on a 120Hz display or a throttled background tab the
+  // drift used to run at the wrong speed). 1500ms here always means 1500ms.
+  // Per-property eases below reproduce the original frame-math exactly:
+  //   left   used the standard Penner easeInOutQuad      -> 'inOutQuad'
+  //   top    used a custom Math.pow(t, 1.6) fall curve    -> 'in(1.6)'
+  //   scale  and opacity ramps were linear in t            -> 'linear'
+  animate(el, {
+    left:    { to: targetX, ease: 'inOutQuad' },
+    top:     { to: targetY, ease: 'in(1.6)' },
+    scale:   { to: 0.7,     ease: 'linear' },
+    opacity: [
+      { to: 1, duration: 225, ease: 'linear' }, // fade in: first 15% of 1500ms
+      { to: 1, duration: 900, ease: 'linear' }, // hold: next 60%
+      { to: 0, duration: 375, ease: 'linear' }, // fade out: last 25%
+    ],
+    duration: 1500,
+    onComplete: finish,
+  });
 }
 
 /* ─────────────────────────────────────────────────────────────────
